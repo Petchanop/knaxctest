@@ -1,0 +1,7 @@
+.idea/
+.vscode/
+knacxtest/node_modules/
+knacxtest/build/
+knacxtest/tmp/
+knacxtest/temp/
+.env
