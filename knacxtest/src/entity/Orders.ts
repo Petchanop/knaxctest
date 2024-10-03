@@ -1,5 +1,6 @@
-import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Patient } from "./Patient";
+import { OrderPayment } from "./Order_payment";
 
 /*
 order_id	bigint(20)	Id รายการสั่งซื้อ
@@ -20,10 +21,14 @@ export enum OrderStatus {
     CANCEL = 3,
 }
 
-@Entity()
+@Entity("order")
 export class Order {
     @PrimaryGeneratedColumn()
     order_id: number
+
+    @CreateDateColumn()
+    create_at: Date
+
 
     @PrimaryGeneratedColumn()
     order_no: number
@@ -31,7 +36,8 @@ export class Order {
     @Column()
     branch_id: number
 
-    @OneToOne(() => Patient)
+    @ManyToOne(() => Patient, (patient) => patient.order, { nullable: true })
+    @JoinColumn({ name: "patient_id", referencedColumnName: "patient_id"})
     patient: Patient
 
     @Column()
@@ -52,4 +58,11 @@ export class Order {
 
     @Column()
     remark_cancel: string
+
+    @OneToMany(() => OrderPayment, (orderPayment) => orderPayment.order, { nullable: true })
+    order_payments: OrderPayment[]
+
+    constructor(partial: Partial<Order>) {
+        Object.assign(this, partial);
+      }
 }

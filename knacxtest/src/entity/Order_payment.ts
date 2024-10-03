@@ -1,4 +1,4 @@
-import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from "typeorm"
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm"
 import { Order } from "./Orders"
 /*
 order_payment_id	bigint(20)	Id การชำระเงิน
@@ -21,15 +21,19 @@ export enum PaymentChannel {
     CREDIT = 5,
 }
 
-@Entity()
+@Entity("order_payment")
 export class OrderPayment {
     @PrimaryGeneratedColumn()
     order_payment_id: number
 
+    @CreateDateColumn()
+    create_at: Date
+
     @Column()
     branch_id: number
 
-    @OneToOne(() => Order)
+    @ManyToOne(() => Order, (order) => order.order_payments, { nullable: true })
+    // @JoinColumn({ name: "order_id", referencedColumnName: "order_id"})
     order : Order
 
     @Column()
@@ -55,6 +59,10 @@ export class OrderPayment {
 
     @Column()
     balance: number
+
+    constructor(partial: Partial<OrderPayment>) {
+        Object.assign(this, partial);
+      }
     // payment_channel_id	bigint(20)	Id ช่องทางการชำระเงิน
     // bank_id	bigint(20)	Id ธนาคาร
     // total_price	double(8,2)	ราคารวมทั้งหมด

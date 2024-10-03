@@ -1,4 +1,6 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
+import { Column, Entity, JoinColumn, OneToMany, PrimaryGeneratedColumn } from "typeorm"
+import { Appointment } from "./Appointments"
+import { Order } from "./Orders"
 /*
 patient_id	bigint(20)	 Id ผู้ป่วย
 branch_id	bigint(20)	 Id สาขา
@@ -20,7 +22,7 @@ export enum Gender {
     MALE = 2,
     NOTANSWER = 3,
 }
-@Entity()
+@Entity("patient")
 export class Patient {
     @PrimaryGeneratedColumn()
     patient_id: number
@@ -66,4 +68,10 @@ export class Patient {
 
     @Column()
     blood_type_id : number
+
+    @OneToMany(()=> Appointment, (appoinment) => appoinment.patient, { nullable: true })
+    appointment: Appointment 
+
+    @OneToMany(()=> Order, (order) => order.patient, { nullable: true })
+    order: Order
 }

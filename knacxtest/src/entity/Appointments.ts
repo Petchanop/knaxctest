@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn, Timestamp } from "typeorm"
+import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn, Timestamp } from "typeorm"
 import { Patient } from "./Patient"
 import { User } from "./User"
 /*
@@ -25,7 +25,7 @@ export enum Status {
     CANCEL = 4,
 }
 
-@Entity()
+@Entity("appointment")
 export class Appointment {
     @PrimaryGeneratedColumn()
     appointment_id: number
@@ -33,13 +33,15 @@ export class Appointment {
     @PrimaryGeneratedColumn()
     appointment_no: number
 
-    @OneToOne(() => Patient)
+    @OneToMany(() => Patient, (patient) => patient.appointment)
+    @JoinColumn({ name: "patient", referencedColumnName: "patient_id"})
     patient: Patient
 
     @Column()
     operative_type_id: string
 
-    @OneToOne(() => User)
+    @OneToMany(() => User, (user) => user.appointment)
+    @JoinColumn({ name: "user", referencedColumnName: "user_id"})
     doctor: User
 
     @Column({
@@ -47,10 +49,8 @@ export class Appointment {
     })
     date: Date
 
-    @Column({
-        type: "timestamp with local time zone",
-    })
-    start_time: Timestamp
+    @Column()
+    start_time: number
 
     @Column()
     duration: number

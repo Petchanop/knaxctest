@@ -1,24 +1,66 @@
-import { AppDataSource, generateSamplePatients } from "./data-source"
+import mockUsers, { AppDataSource, generateMockAppointments, generateMockOrderPayments, generateMockOrders, generateSamplePatients } from "./data-source"
 import * as express from "express"
 import { Request, Response } from "express"
 import { Patient } from "./entity/Patient";
+import { User } from "./entity/User";
+import { Appointment } from "./entity/Appointments";
+import { Order, OrderStatus } from "./entity/Orders";
+import { OrderPayment, PaymentChannel } from "./entity/Order_payment";
+import { Equal, LessThanOrEqual } from "typeorm";
 
 AppDataSource.initialize()
   .then(async () => {
-    const patients = generateSamplePatients(10);
-    const result = await AppDataSource.createQueryBuilder()
+    const isPatientinitialize = await AppDataSource.getRepository(Patient).find()
+    if (!isPatientinitialize.length) {
+      const patients = generateSamplePatients(10);
+      const result = await AppDataSource.createQueryBuilder()
         .insert()
         .into(Patient)
         .values(patients).execute()
-    console.log(result)
+      console.log("insert patients : ", patients)
+    }
+    const isUserinitialize = await AppDataSource.getRepository(User).find()
+    if (!isUserinitialize.length) {
+      const users = await AppDataSource.createQueryBuilder()
+        .insert()
+        .into(User)
+        .values(mockUsers).execute()
+      console.log("insert user : ", users)
+    }
+    const isAppointmentinitialize = await AppDataSource.getRepository(Appointment).find()
+    if (!isAppointmentinitialize.length) {
+      const doctor = await AppDataSource.getRepository(User).find()
+      const patientsData = await AppDataSource.getRepository(Patient).find()
+      const appointments = generateMockAppointments(patientsData, doctor, 5)
+      const insertAppointments = await AppDataSource.createQueryBuilder()
+        .insert()
+        .into(Appointment)
+        .values(appointments).execute()
+      console.log("insert appointment : ", insertAppointments)
+    }
+    const isOrderinitialize = await AppDataSource.getRepository(Order).find()
+    if (!isOrderinitialize.length) {
+      const patientsData = await AppDataSource.getRepository(Patient).find()
+      const orders = generateMockOrders(patientsData, 30)
+      const insertOrders = await AppDataSource.createQueryBuilder()
+        .insert()
+        .into(Order)
+        .values(orders).execute()
+      console.log("insert orders : ", insertOrders)
+
+      const initializeOrder = await AppDataSource.getRepository(Order).find()
+      const ordersPayment = generateMockOrderPayments(initializeOrder, 15)
+      const insertOrdersPayment = await AppDataSource.createQueryBuilder()
+        .insert()
+        .into(OrderPayment)
+        .values(ordersPayment).execute()
+      console.log("insert orders payment : ", insertOrdersPayment)
+    }
     console.log("Data Source has been initialized!")
   })
   .catch((err) => {
     console.error("Error during Data Source initialization:", err)
   })
-
-
-
 
 const app = express();
 app.use(express.json())
@@ -98,6 +140,79 @@ app.get("/testfour", (req: Request, res: Response) => {
     }
   }
   res.send(`result : ${result}`)
+})
+
+app.get("/patients", async (req: Request, res: Response) => {
+  var result = await AppDataSource.getRepository(Patient).find()
+  res.send(result)
+})
+
+app.get("/appointments/", async (req: Request, res: Response) => {
+  const query = req.query
+  var result = await AppDataSource.getRepository(Appointment).find({ where: query })
+  res.send(result)
+})
+
+app.get("/dailysales", async (req: Request, res: Response) => {
+  const today = new Date()
+  console.log(today.getDate())
+  const orderPaid = await AppDataSource.getRepository(Order).find({where : { create_at: LessThanOrEqual(today) }})
+  console.log(orderPaid)
+  const result = []
+  for (var order of orderPaid) {
+    const orderPayment = await AppDataSource.getRepository(OrderPayment).find({ relations : {order : true}, where : { order : { order_id: order.order_id} }})
+    console.log(orderPayment)
+    for (var payment of orderPayment) {
+      console.log(order)
+      if (order.patient === undefined){
+        break
+      }
+      let patient = await AppDataSource.getRepository(Patient).find({ relations : {order : true}})
+      const saleOrder =
+      {
+        "date_time": order.create_at,           // a. วันที่- เวลา
+        "item_code": order,                       // b. รหัสรายการสินค้า
+        "payment_code": payment.order_payment_id,                       // c. รหัสใบชำระเงิน
+        "patient_name": order.patient,                      // d. ชื่อ-สกุลผู้ป่วย
+        "patient_id": order.patient.patient_id,                          // e. เลขประจำตัวผู้ป่วย
+        "age": order.patient.date_of_birth,                                       // f. อายุ
+        "payment_status": order.status,                        // g. สถานะชำระเงิน
+        "total_price": payment.total_price,                       // h. ราคาทั้งหมด
+        "cash": payment.payment_channel_id === PaymentChannel.CASH ? payment.price : 0,                                  // i. เงินสด
+        "transfer": payment.payment_channel_id === PaymentChannel.TRANSFER_APP ? payment.price : 0,                             // j. โอน
+        "transfer_bank": payment.payment_channel_id === PaymentChannel.TRANSFER_BANK ? payment.price : 0,                       // k. โอน-ธนาคาร
+        "credit_card": payment.payment_channel_id === PaymentChannel.CREDIT ? payment.price : 0,                           // l. บัตรเครดิต
+        "check": payment.payment_channel_id === PaymentChannel.CHECK ? payment.price : 0,                                  // m. เช็ค
+        "net_payment": payment.total_price                           // n. ยอดชำระสุทธิ
+      }
+      result.push(saleOrder)
+    }
+  }
+  res.send(result)
+})
+
+app.get("/unpaid", async (req: Request, res: Response) => {
+  const result = []
+  console.log("unpaid")
+  const orderUnPaid = await AppDataSource.getRepository(Order).find({ where: { status: OrderStatus.NOTPAID } })
+  console.log(orderUnPaid)
+  for (var order of orderUnPaid) {
+    const orderPayment = await AppDataSource.getRepository(OrderPayment).find({ relations : {order : true}, where : { order : { order_id: order.order_id} }})
+    console.log(orderPayment)
+    for (var unpaid of orderPayment) {
+      const unpaidData = {
+        "patient_name": `${order.patient.firstname} ${order.patient.lastname}`,                     // a. ชื่อ-สกุลผู้ป่วย
+        "patient_id": order.patient.patient_id,                         // b. เลขประจำตัวผู้ป่วย
+        "item_code": order.order_id,                       // c. รหัสรายการสินค้า
+        "payment_code": unpaid.payment_no,                      // d. รหัสใบชำระเงิน
+        "total_price": order.total_price,                          // e. ราคาทั้งหมด
+        "outstanding_balance": unpaid.balance,                  // f. ยอดค้างคงเหลือ
+        "last_payment_date": unpaid.create_at    // g. ชำระล่าสุดเมื่อ
+      }
+      result.push(unpaidData)
+    }
+  }
+  res.send(result)
 })
 
 app.listen(port, () => {
