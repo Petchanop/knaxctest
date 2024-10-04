@@ -7,7 +7,6 @@ import { Appointment } from "./entity/Appointments";
 import { Order, OrderStatus } from "./entity/Orders";
 import { OrderPayment, PaymentChannel } from "./entity/Order_payment";
 import { LessThan, MoreThan } from "typeorm";
-import { isTemplateMiddleOrTemplateTail } from "typescript";
 
 AppDataSource.initialize()
   .then(async () => {
@@ -32,7 +31,7 @@ AppDataSource.initialize()
     if (!isAppointmentinitialize.length) {
       const doctor = await AppDataSource.getRepository(User).find()
       const patientsData = await AppDataSource.getRepository(Patient).find()
-      const [appointments, patients] = generateMockAppointments(patientsData, doctor, 10)
+      const appointments = generateMockAppointments(patientsData, doctor, 10)
       const insertAppointments = await AppDataSource.createQueryBuilder()
         .insert()
         .into(Appointment)
@@ -85,7 +84,6 @@ app.get("/testone", (req: Request, res: Response) => {
   let star = 1
   for (let i = 0; i < 10; i++) {
     let count = star
-    console.log(start, star)
     for (let j = 0; j <= width; j++) {
       if (j >= start && count != 0) {
         result += "*"
@@ -151,8 +149,17 @@ app.get("/patients", async (req: Request, res: Response) => {
 
 app.get("/appointments/", async (req: Request, res: Response) => {
   const query = req.query
-  var result = await AppDataSource.getRepository(Appointment).find({ where: query })
-  res.send(result)
+  console.log(req.query)
+  try {
+    var result = await AppDataSource.getRepository(Appointment).find({ where: query })
+    if (!result) {
+      res.status(500)
+      res.send("Wrong Query Parameter")
+    }
+    res.send(result)
+  } catch (error) {
+    res.status(500).json(error) 
+  }
 })
 
 app.get("/dailysales", async (req: Request, res: Response) => {
@@ -182,7 +189,6 @@ app.get("/dailysales", async (req: Request, res: Response) => {
         }
       })
       for (var orderPaid of orderPayment) {
-        console.log(orderPaid.create_at)
         const saleOrder =
         {
           "date_time": order.create_at,           // a. วันที่- เวลา
@@ -209,7 +215,6 @@ app.get("/dailysales", async (req: Request, res: Response) => {
 
 app.get("/unpaid", async (req: Request, res: Response) => {
   const result = []
-  console.log("unpaid")
   const patients = await AppDataSource.getRepository(Patient).find({
     relations: {
       order: true

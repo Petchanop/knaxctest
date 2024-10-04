@@ -2,11 +2,9 @@ import "reflect-metadata"
 import { DataSource } from "typeorm"
 import { User } from "./entity/User"
 import { Gender, Patient } from "./entity/Patient";
-import { Appointment, Status } from "./entity/Appointments";
+import { Appointment } from "./entity/Appointments";
 import { Order, OrderStatus } from "./entity/Orders";
 import { OrderPayment } from "./entity/Order_payment";
-import { appendFile } from "fs";
-import { PlainObjectToNewEntityTransformer } from "typeorm/query-builder/transformer/PlainObjectToNewEntityTransformer";
 
 export const generateSamplePatients = (count: number) : Patient[] => {
     const samplePatients = [];
