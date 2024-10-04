@@ -36,8 +36,10 @@ export class Order {
     @Column()
     branch_id: number
 
-    @ManyToOne(() => Patient, (patient) => patient.order, { nullable: true })
-    @JoinColumn({ name: "patient_id", referencedColumnName: "patient_id"})
+    @ManyToOne(() => Patient, (patient) => patient.order, { 
+        nullable: true , cascade: ["insert", "update"],
+    })
+    @JoinColumn()
     patient: Patient
 
     @Column()
@@ -59,7 +61,10 @@ export class Order {
     @Column()
     remark_cancel: string
 
-    @OneToMany(() => OrderPayment, (orderPayment) => orderPayment.order, { nullable: true })
+    @OneToMany(() => OrderPayment, (orderPayment) => orderPayment.order, { 
+        nullable: true,
+        cascade: ["insert", "update"],
+    })
     order_payments: OrderPayment[]
 
     constructor(partial: Partial<Order>) {

@@ -26,7 +26,7 @@ export enum Gender {
 export class Patient {
     @PrimaryGeneratedColumn()
     patient_id: number
-    
+
     @Column()
     branch_id: number
 
@@ -49,10 +49,10 @@ export class Patient {
     firstname: string
 
     @Column()
-    lastname : string
+    lastname: string
 
     @Column()
-    display_name : string
+    display_name: string
 
     @Column({
         type: "enum",
@@ -64,14 +64,20 @@ export class Patient {
     @Column({
         type: 'date',
     })
-    date_of_birth: Date 
+    date_of_birth: Date
 
     @Column()
-    blood_type_id : number
+    blood_type_id: number
 
-    @OneToMany(()=> Appointment, (appoinment) => appoinment.patient, { nullable: true })
-    appointment: Appointment 
+    @OneToMany(() => Appointment, (appoinment) => appoinment.patient, {
+        nullable: true,
+        cascade: ["insert", "update"],
+    })
+    appointment: Appointment[]
 
-    @OneToMany(()=> Order, (order) => order.patient, { nullable: true })
-    order: Order
+    @OneToMany(() => Order, (order) => order.patient, {
+        nullable: true,
+        cascade: ["insert", "update"],
+    })
+    order: Order[]
 }

@@ -6,7 +6,8 @@ import { User } from "./entity/User";
 import { Appointment } from "./entity/Appointments";
 import { Order, OrderStatus } from "./entity/Orders";
 import { OrderPayment, PaymentChannel } from "./entity/Order_payment";
-import { Equal, LessThanOrEqual } from "typeorm";
+import { LessThan, MoreThan } from "typeorm";
+import { isTemplateMiddleOrTemplateTail } from "typescript";
 
 AppDataSource.initialize()
   .then(async () => {
@@ -31,11 +32,12 @@ AppDataSource.initialize()
     if (!isAppointmentinitialize.length) {
       const doctor = await AppDataSource.getRepository(User).find()
       const patientsData = await AppDataSource.getRepository(Patient).find()
-      const appointments = generateMockAppointments(patientsData, doctor, 5)
+      const [appointments, patients] = generateMockAppointments(patientsData, doctor, 10)
       const insertAppointments = await AppDataSource.createQueryBuilder()
         .insert()
         .into(Appointment)
         .values(appointments).execute()
+
       console.log("insert appointment : ", insertAppointments)
     }
     const isOrderinitialize = await AppDataSource.getRepository(Order).find()
@@ -49,7 +51,7 @@ AppDataSource.initialize()
       console.log("insert orders : ", insertOrders)
 
       const initializeOrder = await AppDataSource.getRepository(Order).find()
-      const ordersPayment = generateMockOrderPayments(initializeOrder, 15)
+      const ordersPayment = generateMockOrderPayments(initializeOrder, 50)
       const insertOrdersPayment = await AppDataSource.createQueryBuilder()
         .insert()
         .into(OrderPayment)
@@ -154,38 +156,52 @@ app.get("/appointments/", async (req: Request, res: Response) => {
 })
 
 app.get("/dailysales", async (req: Request, res: Response) => {
-  const today = new Date()
-  console.log(today.getDate())
-  const orderPaid = await AppDataSource.getRepository(Order).find({where : { create_at: LessThanOrEqual(today) }})
-  console.log(orderPaid)
+
   const result = []
-  for (var order of orderPaid) {
-    const orderPayment = await AppDataSource.getRepository(OrderPayment).find({ relations : {order : true}, where : { order : { order_id: order.order_id} }})
-    console.log(orderPayment)
-    for (var payment of orderPayment) {
-      console.log(order)
-      if (order.patient === undefined){
-        break
+  const today = new Date().toLocaleString('en-TH', { timeZone: 'Asia/Bangkok' });
+  const Yesterday = new Date(today)
+  Yesterday.setDate(Yesterday.getDate())
+  Yesterday.setHours(0, 0, 0, 0)
+  const Tomorrow = new Date(today)
+  Tomorrow.setDate(Tomorrow.getDate() + 1)
+  Tomorrow.setHours(0,0,0,0)
+  const patients = await AppDataSource.getRepository(Patient).find({
+    relations: {
+      order: true
+    },
+  })
+  for (let patient of patients) {
+    for (let order of patient.order) {
+      const orderPayment = await AppDataSource.getRepository(OrderPayment).find({
+        relations: {
+          order: true
+        },
+        where: {
+          create_at: MoreThan(Yesterday) && LessThan(Tomorrow),
+          order: {order_id: order.order_id}
+        }
+      })
+      for (var orderPaid of orderPayment) {
+        console.log(orderPaid.create_at)
+        const saleOrder =
+        {
+          "date_time": order.create_at,           // a. วันที่- เวลา
+          "item_code": order.order_no,                       // b. รหัสรายการสินค้า
+          "payment_code": orderPaid.order_payment_id,                       // c. รหัสใบชำระเงิน
+          "patient_name": `${patient.firstname} ${patient.lastname}`,                      // d. ชื่อ-สกุลผู้ป่วย
+          "patient_id": patient.patient_id,                          // e. เลขประจำตัวผู้ป่วย
+          "age": patient.date_of_birth,                                       // f. อายุ
+          "payment_status": order.status,                        // g. สถานะชำระเงิน
+          "total_price": order.total_price,                       // h. ราคาทั้งหมด
+          "cash": orderPaid.payment_channel_id === PaymentChannel.CASH ? orderPaid.price : 0,                                  // i. เงินสด
+          "transfer": orderPaid.payment_channel_id === PaymentChannel.TRANSFER_APP ? orderPaid.price : 0,                             // j. โอน
+          "transfer_bank": orderPaid.payment_channel_id === PaymentChannel.TRANSFER_BANK ? orderPaid.price : 0,                       // k. โอน-ธนาคาร
+          "credit_card": orderPaid.payment_channel_id === PaymentChannel.CREDIT ? orderPaid.price : 0,                           // l. บัตรเครดิต
+          "check": orderPaid.payment_channel_id === PaymentChannel.CHECK ? orderPaid.price : 0,                                  // m. เช็ค
+          "net_payment": orderPaid.total_price                       // n. ยอดชำระสุทธิ
+        }
+        result.push(saleOrder)
       }
-      let patient = await AppDataSource.getRepository(Patient).find({ relations : {order : true}})
-      const saleOrder =
-      {
-        "date_time": order.create_at,           // a. วันที่- เวลา
-        "item_code": order,                       // b. รหัสรายการสินค้า
-        "payment_code": payment.order_payment_id,                       // c. รหัสใบชำระเงิน
-        "patient_name": order.patient,                      // d. ชื่อ-สกุลผู้ป่วย
-        "patient_id": order.patient.patient_id,                          // e. เลขประจำตัวผู้ป่วย
-        "age": order.patient.date_of_birth,                                       // f. อายุ
-        "payment_status": order.status,                        // g. สถานะชำระเงิน
-        "total_price": payment.total_price,                       // h. ราคาทั้งหมด
-        "cash": payment.payment_channel_id === PaymentChannel.CASH ? payment.price : 0,                                  // i. เงินสด
-        "transfer": payment.payment_channel_id === PaymentChannel.TRANSFER_APP ? payment.price : 0,                             // j. โอน
-        "transfer_bank": payment.payment_channel_id === PaymentChannel.TRANSFER_BANK ? payment.price : 0,                       // k. โอน-ธนาคาร
-        "credit_card": payment.payment_channel_id === PaymentChannel.CREDIT ? payment.price : 0,                           // l. บัตรเครดิต
-        "check": payment.payment_channel_id === PaymentChannel.CHECK ? payment.price : 0,                                  // m. เช็ค
-        "net_payment": payment.total_price                           // n. ยอดชำระสุทธิ
-      }
-      result.push(saleOrder)
     }
   }
   res.send(result)
@@ -197,7 +213,7 @@ app.get("/unpaid", async (req: Request, res: Response) => {
   const orderUnPaid = await AppDataSource.getRepository(Order).find({ where: { status: OrderStatus.NOTPAID } })
   console.log(orderUnPaid)
   for (var order of orderUnPaid) {
-    const orderPayment = await AppDataSource.getRepository(OrderPayment).find({ relations : {order : true}, where : { order : { order_id: order.order_id} }})
+    const orderPayment = await AppDataSource.getRepository(OrderPayment).find({ relations: { order: true }, where: { order: { order_id: order.order_id } } })
     console.log(orderPayment)
     for (var unpaid of orderPayment) {
       const unpaidData = {

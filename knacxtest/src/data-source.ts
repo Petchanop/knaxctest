@@ -5,6 +5,8 @@ import { Gender, Patient } from "./entity/Patient";
 import { Appointment, Status } from "./entity/Appointments";
 import { Order, OrderStatus } from "./entity/Orders";
 import { OrderPayment } from "./entity/Order_payment";
+import { appendFile } from "fs";
+import { PlainObjectToNewEntityTransformer } from "typeorm/query-builder/transformer/PlainObjectToNewEntityTransformer";
 
 export const generateSamplePatients = (count: number) : Patient[] => {
     const samplePatients = [];
@@ -87,9 +89,9 @@ export const generateMockAppointments = (patients: Patient[], doctors: User[], c
         const appointment: Appointment = {
             appointment_id: i + 1,
             appointment_no: 1000 + i,
-            patient: patient,
+            patient: patient as Patient, 
             operative_type_id: `OT${Math.floor(100 + Math.random() * 900)}`,  // Random operation ID
-            doctor: doctor,
+            doctor: doctor as User,
             date: appointmentDate,
             start_time: appointmentDate.getHours(),  // Vary start time by hour (9 AM - 4 PM)
             duration: 30 + (i % 4) * 15,                      // Duration between 30 to 75 minutes
@@ -98,7 +100,6 @@ export const generateMockAppointments = (patients: Patient[], doctors: User[], c
             status: Math.floor(Math.random() * 4) + 1,                         // Set status to 'Scheduled'
             isDone: false                                     // Default to not completed
         };
-
         appointments.push(appointment);
     }
 
@@ -107,10 +108,14 @@ export const generateMockAppointments = (patients: Patient[], doctors: User[], c
 
 export const generateMockOrders = (patients: Patient[], count: number): Order[] => {
     const orders: Order[] = [];
-
     for (let i = 0; i < count; i++) {
         const patient = patients[i % patients.length]; // Cycle through patients
+        const date = new Date();
+        const randomDays = Math.floor(Math.random() * 30);
+        const orderDate = new Date(date);
+        orderDate.setDate(orderDate.getDate() + randomDays);
         const order: Order = {
+            create_at: orderDate,
             order_id: i + 1,
             order_no: 1000 + i,
             branch_id: Math.floor(Math.random() * 10) + 1, // Random branch ID between 1 and 10
@@ -121,10 +126,8 @@ export const generateMockOrders = (patients: Patient[], count: number): Order[] 
             code_cancel: Math.random() < 0.2 ? `CANCEL${i}` : '', // 20% chance of having a cancel code
             remark_cancel: Math.random() < 0.2 ? 'Order canceled due to issue' : '', // 20% chance of having a cancel remark
         } as Order;
-
         orders.push(order);
     }
-
     return orders;
 }
 
@@ -138,7 +141,6 @@ export const generateMockOrderPayments = (orders: Order[], count: number): Order
         const price = Math.floor(Math.random() * total_price * 0.8) + 1; // Random payment up to 80% of total price
         const balance = total_price - price; // Calculate balance
         const date = new Date();
-        date.setDate(date.getDate() + i);
         const randomDays = Math.floor(Math.random() * 30);
         const orderDate = new Date(date);
         orderDate.setDate(orderDate.getDate() + randomDays);

@@ -32,8 +32,10 @@ export class OrderPayment {
     @Column()
     branch_id: number
 
-    @ManyToOne(() => Order, (order) => order.order_payments, { nullable: true })
-    // @JoinColumn({ name: "order_id", referencedColumnName: "order_id"})
+    @ManyToOne(() => Order, (order) => order.order_payments, { 
+        nullable: true ,cascade: ["insert", "update"],
+    })
+    @JoinColumn()
     order : Order
 
     @Column()

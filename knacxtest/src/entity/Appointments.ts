@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn, Timestamp } from "typeorm"
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, Timestamp } from "typeorm"
 import { Patient } from "./Patient"
 import { User } from "./User"
 /*
@@ -33,15 +33,21 @@ export class Appointment {
     @PrimaryGeneratedColumn()
     appointment_no: number
 
-    @OneToMany(() => Patient, (patient) => patient.appointment)
-    @JoinColumn({ name: "patient", referencedColumnName: "patient_id"})
+    @ManyToOne(() => Patient, (patient) => patient.appointment ,{
+        nullable: true,
+        cascade: ["insert", "update"],
+    })
+    @JoinColumn()
     patient: Patient
 
     @Column()
     operative_type_id: string
 
-    @OneToMany(() => User, (user) => user.appointment)
-    @JoinColumn({ name: "user", referencedColumnName: "user_id"})
+    @ManyToOne(() => User, (user) => user.appointment, {
+        nullable: true,
+        cascade: ["insert", "update"],
+    })
+    @JoinColumn()
     doctor: User
 
     @Column({
