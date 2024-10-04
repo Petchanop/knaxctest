@@ -164,7 +164,7 @@ app.get("/dailysales", async (req: Request, res: Response) => {
   Yesterday.setHours(0, 0, 0, 0)
   const Tomorrow = new Date(today)
   Tomorrow.setDate(Tomorrow.getDate() + 1)
-  Tomorrow.setHours(0,0,0,0)
+  Tomorrow.setHours(0, 0, 0, 0)
   const patients = await AppDataSource.getRepository(Patient).find({
     relations: {
       order: true
@@ -178,7 +178,7 @@ app.get("/dailysales", async (req: Request, res: Response) => {
         },
         where: {
           create_at: MoreThan(Yesterday) && LessThan(Tomorrow),
-          order: {order_id: order.order_id}
+          order: { order_id: order.order_id }
         }
       })
       for (var orderPaid of orderPayment) {
@@ -210,24 +210,40 @@ app.get("/dailysales", async (req: Request, res: Response) => {
 app.get("/unpaid", async (req: Request, res: Response) => {
   const result = []
   console.log("unpaid")
-  const orderUnPaid = await AppDataSource.getRepository(Order).find({ where: { status: OrderStatus.NOTPAID } })
-  console.log(orderUnPaid)
-  for (var order of orderUnPaid) {
-    const orderPayment = await AppDataSource.getRepository(OrderPayment).find({ relations: { order: true }, where: { order: { order_id: order.order_id } } })
-    console.log(orderPayment)
-    for (var unpaid of orderPayment) {
-      const unpaidData = {
-        "patient_name": `${order.patient.firstname} ${order.patient.lastname}`,                     // a. ชื่อ-สกุลผู้ป่วย
-        "patient_id": order.patient.patient_id,                         // b. เลขประจำตัวผู้ป่วย
-        "item_code": order.order_id,                       // c. รหัสรายการสินค้า
-        "payment_code": unpaid.payment_no,                      // d. รหัสใบชำระเงิน
-        "total_price": order.total_price,                          // e. ราคาทั้งหมด
-        "outstanding_balance": unpaid.balance,                  // f. ยอดค้างคงเหลือ
-        "last_payment_date": unpaid.create_at    // g. ชำระล่าสุดเมื่อ
+  const patients = await AppDataSource.getRepository(Patient).find({
+    relations: {
+      order: true
+    },
+    where: {
+      order: {
+        status: OrderStatus.NOTPAID,
       }
-      result.push(unpaidData)
     }
-  }
+  })
+  for (let patient of patients){
+    for (let order of patient.order) {
+        const unpaidPayment = await AppDataSource.getRepository(OrderPayment).find({
+          relations: {
+            order : true
+          },
+          where : {
+            order: {order_id: order.order_id}
+          }
+        })
+        for (let unpaid of unpaidPayment) {
+          const unpaidData = {
+            "patient_name": `${patient.firstname} ${patient.lastname}`,                     // a. ชื่อ-สกุลผู้ป่วย
+            "patient_id": patient.patient_id,                         // b. เลขประจำตัวผู้ป่วย
+            "item_code": order.order_id,                       // c. รหัสรายการสินค้า
+            "payment_code": unpaid.payment_no,                      // d. รหัสใบชำระเงิน
+            "total_price": order.total_price,                          // e. ราคาทั้งหมด
+            "outstanding_balance": unpaid.balance,                  // f. ยอดค้างคงเหลือ
+            "last_payment_date": unpaid.create_at    // g. ชำระล่าสุดเมื่อ
+          }
+          result.push(unpaidData)
+        }
+      }
+    }
   res.send(result)
 })
 
