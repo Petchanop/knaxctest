@@ -19,9 +19,9 @@ all test is writting in api route
 
 for test 5 pass query parameter in url
 example 
-    <br/>http://localhost:8080/appointments?duration=30 
-    <br/>http://localhost:8080/appointments?start_time=9 
-    <br/>...
+&emsp;<br/>http://localhost:8080/appointments?duration=30 
+&emsp;<br/>http://localhost:8080/appointments?start_time=9 
+&emsp;<br/>...
 <br/>
 
 5. localhost:8080/appointment
