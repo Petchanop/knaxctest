@@ -23,6 +23,6 @@ for test 5 pass query parameter in url example<br/>
 &emsp;...<br/>
 <br/>
 
-1. localhost:8080/appointment
-2. localhost:8080/dailysales // finish after deadline
-3. localhost:8080/unpaid //finish after deadline 
+5. localhost:8080/appointment
+6. localhost:8080/dailysales // finish after deadline
+7. localhost:8080/unpaid //finish after deadline 
