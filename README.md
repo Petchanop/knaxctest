@@ -18,7 +18,11 @@ all test is writting in api route
 4. localhost:8080/testfour
 
 for test 5 pass query parameter in url
-example http://localhost:8080/appointments?duration=30 , http://localhost:8080/appointments?start_time=9 ...<br/>
+example 
+<br/>http://localhost:8080/appointments?duration=30 
+<br/>http://localhost:8080/appointments?start_time=9 
+<br/>...
+<br/>
 
 5. localhost:8080/appointment
 6. localhost:8080/dailysales // finish after deadline
