@@ -17,12 +17,12 @@ all test is writting in api route
 3. localhost:8080/testthree
 4. localhost:8080/testfour
 
-for test 5 pass query parameter in url example
-&nbsp;&nbsp;&nbsp;&nbsp;<br/>http://localhost:8080/appointments?duration=30
-&nbsp;&nbsp;&nbsp;&nbsp;<br/>http://localhost:8080/appointments?start_time=9
-&nbsp;&nbsp;&nbsp;&nbsp;<br/>...
+for test 5 pass query parameter in url example<br/>
+&emsp;http://localhost:8080/appointments?duration=30<br/>
+&emsp;http://localhost:8080/appointments?start_time=9<br/>
+&emsp;...<br/>
 <br/>
 
-5. localhost:8080/appointment
-6. localhost:8080/dailysales // finish after deadline
-7. localhost:8080/unpaid //finish after deadline 
+1. localhost:8080/appointment
+2. localhost:8080/dailysales // finish after deadline
+3. localhost:8080/unpaid //finish after deadline 
