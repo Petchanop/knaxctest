@@ -1,4 +1,4 @@
-knaxctest
+#knaxctest
 
 Using nodejs express and typeorm
 
@@ -17,11 +17,10 @@ all test is writting in api route
 3. localhost:8080/testthree
 4. localhost:8080/testfour
 
-for test 5 pass query parameter in url
-example 
-&emsp;<br/>http://localhost:8080/appointments?duration=30 
-&emsp;<br/>http://localhost:8080/appointments?start_time=9 
-&emsp;<br/>...
+for test 5 pass query parameter in url example
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>http://localhost:8080/appointments?duration=30
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>http://localhost:8080/appointments?start_time=9
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>...
 <br/>
 
 5. localhost:8080/appointment
